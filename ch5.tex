@@ -1,0 +1,498 @@
+\documentclass[t]{beamer}
+
+%\documentclass[handout, t]{beamer}
+\setbeamertemplate{navigation symbols}{}
+\usepackage{pstricks}
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage{mathrsfs}
+\usepackage{amsmath}
+\setbeamertemplate{navigation symbols}{}
+\usepackage{bm}
+\usepackage[UTF8]{ctex}
+\usetheme{AnnArbor}
+\usefonttheme{serif}
+\useinnertheme{rounded}
+%\usecolortheme{crane}
+\setbeamertemplate{blocks}[rounded][shadow=true]
+
+\newcommand{\dif}{{\;\rm d}}
+\usepackage{graphicx}
+\usepackage{pgf}
+\usepackage{tikz}
+\usetikzlibrary{arrows, decorations.pathmorphing, backgrounds, positioning, fit, petri, automata}
+\tikzset{>=stealth}
+\usepackage{tkz-euclide}
+
+\setmainfont{Times New Roman}
+\setCJKmainfont{Microsoft YaHei}
+
+
+\hypersetup{pdfpagemode=FullScreen}
+\renewcommand{\Pr}{\mathbb{P}}
+\usepackage{blkarray}
+
+
+\setbeamercolor{block title}{bg=red!10!white}
+\setbeamercolor{block body}{bg=gray!10!white}
+
+\usepackage{multicol}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\EP}{\mathbb{E}^{\mathbb{P}}}
+\newcommand{\EQ}{\mathbb{E}^{\mathbb{Q}}}
+\newcommand{\Var}{{\rm Var}}
+\newcommand{\Cov}{{\rm Cov}}
+\usepackage{listings}
+
+
+\lstset{
+  language=Python, % 设置语言
+  basicstyle=\ttfamily, % 设置字体族
+  breaklines=true, % 自动换行
+  keywordstyle=\bfseries\color{blue}, % 设置关键字
+  ndkeywordstyle=\bfseries\color{blue}, % 设置关键字
+  classoffset=0,
+  emph=[0]{self, plt, pd, np, print, sm, sns, None, True, False}, % 指定强调词，如果有多个，用逗号隔开
+  emphstyle=\bfseries\color{magenta!90!black}, % 强调词样式设置
+  classoffset=1,
+  moreemph=[1]{plot, text, title, show, scatter, as, figure, xlabel, ylabel, fit, }, % 设置更多的关键字，用逗号分隔
+  emphstyle=\bfseries\color{blue}, % 强调词样式设置
+  classoffset=0,
+  commentstyle=\itshape\color{gray}, % 设置注释样式，斜体，浅灰色
+  stringstyle=\bfseries\color{green!50!black}, % 设置字符串样式
+  columns=flexible,
+  numberstyle=\footnotesize, % 缩小行号
+}
+
+\begin{document}
+\fontsize{11}{18}\selectfont
+
+
+\CTEXindent
+
+
+
+  \title{第五章~~大数据用户特征分析}
+\author{方杰、李烜}
+\date{福建江夏学院金融学院}
+  \begin{frame}
+    \maketitle
+  \end{frame}
+
+\begin{frame}{本章内容}
+    \tableofcontents
+\end{frame}
+
+\section{用户特征的RFM分析}
+\subsection{RFM模型的基本原理}
+\begin{frame}
+    \frametitle{RFM模型}
+    如何将用户从一个整体拆分成特征明显的群体是精细化运营的关键。RFM模型是 衡量用户价值和用户创利能力的经典工具。
+\begin{itemize}
+  \item R (Recency) 最近一次消费时间间隔
+  \item  F (Frequency) 消费频率
+  \item  M (Monetary) 消费金额
+\end{itemize}
+
+基于这三个维度，每个维度都可以取高或低两种值，可以构造出一个三维的坐标系。由此依托于用户最近一次消费时间、 消费频次以及消费金额可以将客户划分为8类价值群体。
+
+
+\end{frame}
+
+
+
+\begin{frame}
+    \frametitle{RFM模型}
+    \centering
+\begin{tikzpicture}[scale=.95]
+  \normalsize
+
+\tkzDefPoints{-2/0/A, 2/0/B, 3/1/C, -1/1/D}
+\tkzDrawPolygon[fill, color=gray!20!white](A,B,C,D)
+
+\tkzDefMidPoint(A,C)  \tkzGetPoint{O}
+\tkzDefPoints{-2/1.5/A', -2/-1.5/A''}
+\tkzDefPointsBy[translation= from A to A'](B,C,D){B',C',D'}
+\tkzDefPointsBy[translation= from A to A''](B,C,D){B'',C'',D''}
+
+
+\tkzDefMidPoint(A,B)  \tkzGetPoint{E}
+\tkzDefMidPoint(B,C)  \tkzGetPoint{F}
+\tkzDefMidPoint(C,D)  \tkzGetPoint{G}
+\tkzDefMidPoint(D,A)  \tkzGetPoint{H}
+
+\tkzDefMidPoint(A',B')  \tkzGetPoint{E'}
+\tkzDefMidPoint(B',C')  \tkzGetPoint{F'}
+\tkzDefMidPoint(C',D')  \tkzGetPoint{G'}
+\tkzDefMidPoint(D',A')  \tkzGetPoint{H'}
+
+\tkzDefMidPoint(A'',B'')  \tkzGetPoint{E''}
+\tkzDefMidPoint(B'',C'')  \tkzGetPoint{F''}
+\tkzDefMidPoint(C'',D'')  \tkzGetPoint{G''}
+\tkzDefMidPoint(D'',A'')  \tkzGetPoint{H''}
+
+\tkzDrawPolygon[fill, color=gray!25!white](E'',G'',G',E')
+
+
+\tkzDrawSegments[dashed](A,B B,C C,D D,A)
+\tkzDrawSegments[dashed](A',B' B',C' C',D' D',A' E'',G'' G'',G' G',E' E',E'')
+\tkzDrawSegments[dashed](A'',B'' B'',C'' C'',D'' D'',A'')
+\tkzDrawSegments[dashed](A',A'' B',B'' C',C'' D',D'')
+\tkzDefMidPoint(A',C')  \tkzGetPoint{O'}
+\tkzDefMidPoint(A'',C'')  \tkzGetPoint{O''}
+
+
+\tkzDefMidPoint(A,B)  \tkzGetPoint{E}
+\tkzDefMidPoint(B,C)  \tkzGetPoint{F}
+\tkzDefMidPoint(C,D)  \tkzGetPoint{G}
+\tkzDefMidPoint(D,A)  \tkzGetPoint{H}
+
+\tkzDefMidPoint(A',B')  \tkzGetPoint{E'}
+\tkzDefMidPoint(B',C')  \tkzGetPoint{F'}
+\tkzDefMidPoint(C',D')  \tkzGetPoint{G'}
+\tkzDefMidPoint(D',A')  \tkzGetPoint{H'}
+
+\tkzDefMidPoint(A'',B'')  \tkzGetPoint{E''}
+\tkzDefMidPoint(B'',C'')  \tkzGetPoint{F''}
+\tkzDefMidPoint(C'',D'')  \tkzGetPoint{G''}
+\tkzDefMidPoint(D'',A'')  \tkzGetPoint{H''}
+
+\tkzDrawLines[->, add = .45 and .45](O'',O' G,E H,F)
+\tkzDrawSegments[dashed](F'',F' F',H' H',H'' H'',F'')
+
+\node at (3.75,0) [above right]{R};
+\node at (0,3.8)[right]{M};
+\node at (-.75,-.75){F};
+
+\draw[<-, color=red] (2,1.75)--(3.5,1)node[right]{1. 重要价值客户};
+\draw[<-, color=red] (2.25,2.2)--(3,3)node[above]{2. 重要发展客户};
+\draw[<-, color=red] (-1.75,1)--(-3,1)node[left]{3. 重要保持客户};
+\draw[<-, color=red] (-.75,2.2)--(-2,3)node[above]{4. 重要挽留客户};
+
+\draw[<-, color=blue] (2.6,-.25)--(3.5,-1)node[right]{6. 一般发展客户};
+\draw[<-, color=blue] (-1.25,-.5)--(-2.5,-1)node[left]{8. 一般挽留客户};
+\draw[<-, color=blue] (1.7,-1.25)--(2.5,-1.5)node[right]{5. 一般价值客户};
+\draw[<-, color=blue] (-1.3,-1.2)--(-2.5,-1.85)node[below]{7. 一般保持客户};
+\node at (O) [fill=cyan!40!white, opacity=.7]{价值的平均值};
+
+\end{tikzpicture}
+ \end{frame}   
+
+
+ \begin{frame}
+  \frametitle{RFM模型的基本原理}
+\begin{center}
+\normalsize
+\begin{tabular}{ccccp{.55\textwidth}}
+\hline
+  客户类型 &R& F & M& 客户场景\\
+\hline
+重要价值客户&高&高&高&RFM都很大，优质客户，客户价值高\\
+重要发展客户&高&低&高&交易金额大贡献度高，且最近有交易，需要重点识别\\
+重要保持客户&低&高&高&交易金额和次数大，但最近无交易，需要保持联系\\
+重要挽留客户&低&低&高&交易金额大，潜在的有价值客户，需要挽留\\
+一般价值客户&高&高&低&交易次数大，最近有交易，需要挖掘\\
+一般发展客户&高&低&低&最近有交易，是接触的新客户，有推广和发展的价值\\
+一般保持客户&低&高&低&交易次数多，但是贡献不大，一般保持\\
+一般挽留客户&低&低&低&RFM都很低，相当于流失客户\\
+\hline
+\end{tabular}
+\end{center}
+  
+
+\end{frame}
+
+
+
+
+\subsection{RFM模型的实施步骤}
+\begin{frame}{RFM模型的实施步骤}
+\begin{itemize}
+  \item 确定RFM的得分值：基于指标数据计算出R、F、M三个指标下可以用于建模计算的，{\color{red}统一量纲}下的数值
+  \item 确定RFM的评分标签：获得RFM的得分数值后，将R、F、M三个维度下的数据，使用“高”“低”两种取值进行表示，也就是“打标签”
+\end{itemize}
+\end{frame}
+
+
+
+
+
+\begin{frame} \frametitle{确定RFM的得分值}
+  R、F、M的计算公式
+\[\begin{cases}
+R=T_{\rm time}-T_{\rm last} \\
+F=Count({\rm order ID})\\
+M=\sum {\rm Price} 
+\end{cases}\]
+\begin{itemize}
+  \item $R$计算的是现在的时间减去用户上一次消费的时间
+  \item $F$计算的是单个用户在一定时间内产生的所有订单的总数
+  \item $M$计算的是单个用户所有交易的总金额
+\end{itemize}
+\begin{block}{注意：}
+RFM得分值要注意数据间存在的量级差距，结合归一化（normalize）处理，使得得分处于同一尺度上，以利于评价
+\end{block}
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{确定RFM的评分标签}
+\begin{itemize}
+  \item  均值RFM模型：  通过与均值的比较进行RFM指标 的打分
+  \item  聚类RFM模型：先用聚类的算法对指标进行 聚类，得到m个客户簇。再将每簇的R、F、M 平均值和总R、F、M平均值作比较
+  \item  动态RFM模型：
+  结合业务人员的经验和大数据分析的结果
+  来划分分界线，而不是采用静态的均值
+\end{itemize}
+    
+
+\end{frame}
+
+\subsection{RFM的Python实现}
+\begin{frame}[fragile]
+    \frametitle{打标签的Python实现}
+    以浦发银行收益率数据为例，对股票收益率的正负情况“打标签”
+\begin{lstlisting}
+  # 浦发银行日收益率数据以dataframe格式存储在变量“df”中。 
+df['tag']= df['returns'].apply(lambda x: 'positive' if x >0 
+                                else 'negative') 
+print(df)
+\end{lstlisting}  
+
+\begin{block}{lambda匿名函数的格式}
+\begin{lstlisting}
+  lambda 参数列表 : 表达式
+\end{lstlisting}
+lambda匿名函数的使用，可以避免对函数进行定义和封装，使代码更为简洁
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{RFM模型得分计算}
+  使用数据透视表函数对数据源进行汇总计算
+\begin{lstlisting}
+import pandas as pd
+pd.pivot_table(data, values, index, aggfunc)
+\end{lstlisting}
+\begin{itemize}
+  \item \verb|data| DataFrame格式的数据源
+  \item \verb|values| 指定需要汇总计算的列的列索引值。若多个值，可以使用列表格式
+  \item \verb|index| 生成的数据透视表行索引
+  \item \verb|aggfunc| 聚合函数或聚合列表，可使用字典结构分别指定
+\end{itemize}
+
+\begin{block}{可用的聚合函数}
+\verb|np.max|，\verb|np.min|，\verb|np.mean|，\verb|np.size|，\verb|np.sum|
+\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]{举例：以客户ID为条件进行筛选，并利用透视表功能计算}
+\begin{lstlisting}
+import numpy as np
+import pandas as pd
+# 读取数据
+df = pd.read_excel('order_merge.xlsx')
+# 计算R、F、M得分值
+RFM = pd.pivot_table(df, values=['timestamp', 
+        'order_id', 'price'], index='customer_unique_id',
+        aggfunc={'timestamp' : np.max, 
+        'order_id' : np.size, 'price' : np.sum})
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]{举例：重命名及数据转换}
+\begin{lstlisting}
+# 为了便于理解和简化代码，先将各列名重命名为R、F、M 
+RFM = RFM.rename(columns={'timestamp' : 'R', 
+                  'order_id' : 'F', 'price': 'M'})
+# 计算2023年1月1日与客户最后一次购买时间的间隔秒数
+RFM['R'] = (pd.to_datetime('2023-01-01 00:00:00') 
+              - RFM['R']).dt.total_seconds() 
+\end{lstlisting}
+
+\begin{block}{说明}
+  \verb|dt.total_seconds|函数可用于将时间转化为秒数
+\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]{举例：运用均值RFM模型打标签及结果分析}
+\begin{lstlisting}
+RFM_mean = RFM[['R', 'F', 'M']].mean()
+RFM['R1'] = RFM['R'].apply(lambda x: 
+                            0 if x > RFM_mean['R'] else 1) 
+RFM['F1'] = RFM['F'].apply(lambda x: 
+                            1 if x > RFM_mean['F'] else 0) 
+RFM['M1'] = RFM['M'].apply(lambda x: 
+                            1 if x > RFM_mean['M'] else 0)
+\end{lstlisting}
+
+最后，根据消费者群体划分的分类要求，对客户群体特征进行分析。见P263
+\end{frame}
+
+\section{用户特征的K-means分析}
+
+\subsection{聚类算法}
+\begin{frame}[fragile]{聚类算法的概况}
+  聚类算法是客户特征分析的一种经典模型，被广泛应用于客户画像、广告推荐、基
+  于位置的商业推送、信用卡异常消费识别等领域
+
+  RFM模型因其数据获取方便，模型成熟度好，被广泛运用在客户画像分析中。但
+  RFM也存在一定的缺陷，比如其研究的变量固定，难以满足决策者因市场环境而变化的
+  需求。此外，由于RFM数据间可能存在较强相关性，最终得出的分类结果可能不理想
+  
+  在大数据实际应用中，许多领域会采用聚类算法对客户特征进行分析
+\end{frame}
+
+
+\begin{frame}[fragile]{聚类算法}
+  聚类(clustering)算法是一种典型的无监督学习(unsupervised learning)算法，主要用于将相似的样本自动归到一个类别中。
+
+  \begin{block}{聚类和分类的区别}
+\begin{itemize}
+  \item 聚类(clustering)是指把相似的数据划分到二起，聚类的时候并不关心这一类
+    的标签，目标就是把相似的数据聚合到一起。二个聚类算法通常只需要知道如何计算相
+    似度就可以开始工作了，并不需要使用训练集数据进行学习，这在机器学习中被称为{\color{blue}无
+    监督学习}。
+    \item 分类(classification)是把不同的数据划分开，其过程是通过训练数据集获得
+    个分类器，再通过分类器去预测未知数据，分类是一种{\color{red}监督学习方法}。
+\end{itemize}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]{聚类算法的分类}
+\begin{itemize}
+  \item 划分式聚类算法：大部分划分方法是基于距离的
+  
+  代表算法有： K-means及其变体K-means++，K-medoids， kernel K-means等
+  \item  基于密度的聚类：核心思想在于只要一个区域中点的密度大于 某个阈值，就把它加到与之相近的聚类中去
+  
+  代表算法有：DBSCAN，OPTICS，DENCLUE， WaveCluster等。
+  \item 基于分层的聚类：能降低前两者的可能存在的链式效应，只适合
+  在数据量小的时候使用，数据量大的时候速度会较慢
+\end{itemize}
+\end{frame}
+
+\subsection{K-Means聚类算法}
+
+
+\begin{frame}[fragile]{K-Means算法的原理}
+  K-Means算法是典型的基于距离的非层次聚类算法
+
+  \begin{block}{基本步骤}
+\begin{enumerate}
+  \item 创建$K$个点作为初始各类簇的中心，通常是随机选择; 
+  \item 计算每个聚类对象到聚类中心的距离来划分类簇; 
+  \item 根据重新划分的类簇，更新每个类簇的中心; 
+  \item 计算标准测度函数，直到达到最大迭代次数则停止，否则继续操作。
+\end{enumerate}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]{K-means算法的优缺点}
+\begin{block}{优点}
+\begin{enumerate}
+  \item 简单、易用
+  \item 收敛速度快，聚类效果优 
+  \item 算法可解释性强
+\end{enumerate}
+\end{block}
+\begin{block}{缺点}
+  \begin{enumerate}
+    \item  $K$值的选取不好把握
+    \item  算法对噪音和异常点比较的敏感
+    \item  由于选择了距离作为相似度划分依据，因此只能发现球型类簇
+  \end{enumerate}
+\end{block}
+\end{frame}
+
+\subsection{K-Means算法的实现}
+
+
+
+\begin{frame}[fragile]{K-means聚类个数选择}
+\begin{itemize}
+  \item 通过观测数据特性进行聚类个数的判定过于主观 且有很大不确定性，通常通过手肘法则(The Elbow Method)寻找最佳聚类个数$K$
+  \item 手肘法的核心思想在于通过误差平方和SSE降低速度的减缓判定出真实聚类数。聚合效果会降低，反映为SSE降低的速度减缓，因此可以通过SSE降低速度的减缓判定出真实聚类数
+  \item Python的\verb|Sklearn|库中的\verb|KMeans|函数能够计算给定聚类个数的误差项，故通过循环计算不同聚类个数下模型的误差项并作图判断最佳聚类个数
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{K-mean模型构建}
+\begin{lstlisting}
+from sklearn.cluster import KMeans
+algorithm=(KMeans(n_clusters, init, n_init, max_iter, 
+            random_state=None, algorithm='auto'))
+\end{lstlisting}
+\begin{itemize}
+  \item \verb|n_clusters| 要形成的聚类数以及要生成的质心数，默认值为8
+  \item \verb|init| 初始化方法，默认为\verb|'k-means++'|
+  \item \verb|n_init| 使用不同质心种子运行的次数，默认为10
+  \item \verb|max_iter| 单次运行算法的最大迭代次数，默认为300
+  \item \verb|random_state| 确定质心初始化的随机数生成方式
+  \item \verb|algorithm| 确定算法风格
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{例：鸢尾花(iris)数据导入}
+  \begin{lstlisting}
+  import numpy as np  
+  import pandas as pd 
+  import matplotlib.pyplot as plt
+  import seaborn as sns
+  from sklearn.cluster import KMeans 
+  from sklearn.datasets import load_iris
+  iris = load_iris()
+  X = iris.data[:]
+  df = pd.DataFrame(X)
+  \end{lstlisting}
+  \end{frame}
+
+\begin{frame}[fragile]{确定类簇个数}
+\begin{lstlisting}
+from sklearn.cluster import KMeans 
+# 剥离出鸢尾花数据的前3个特征，构成数据X3
+X3 = df[[0,1,2]].values  
+inertia = []
+for n in range(1, 11):
+    algorithm=(KMeans(n_clusters=n, init='k-means++', 
+                random_state=111, algorithm='elkan'))
+    algorithm.fit(X3)   # 按样本数据X3拟合聚类函数
+    inertia.append(algorithm.inertia_)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{确定类簇个数(cont.)}
+  通过作图观察寻找最佳聚类个数$K$
+\begin{lstlisting}
+import matplotlib.pyplot as plt 
+import seaborn as sns
+plt.figure(1,figsize = (15,6)) 
+plt.plot(np.arange(1,11), inertia, 'o') 
+plt.plot(np.arange(1,11), inertia, '-', alpha=0.5)
+plt.xlabel('Number of Clusters') 
+plt.ylabel('Inertia') 
+plt.show()
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]{K-means模型构建}
+\begin{lstlisting}
+algorithm = (KMeans(n_clusters=3, init='k-means++', 
+              n_init=10, max_iter=300, tol=0.0001,
+              random_state=111, algorithm='elkan') ) 
+algorithm.fit(X3)   # 将鸢尾花数据X3代入
+labels3 = algorithm.labels_   # 获得每个客户所在的类别
+centroids3 = algorithm.cluster_centers_ # 获得各类别的中心点 
+df['label3'] = labels3
+\end{lstlisting}
+\end{frame}
+
+
+
+\end{document}
