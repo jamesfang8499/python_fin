@@ -1,0 +1,900 @@
+\documentclass[t]{beamer}
+
+%\documentclass[handout, t]{beamer}
+\setbeamertemplate{navigation symbols}{}
+
+ 
+\usepackage{amsfonts}
+\usepackage{mathrsfs}
+\usepackage{amsmath}
+\usepackage{multicol}
+
+\usepackage{bm}
+\usepackage[UTF8]{ctex}
+\usetheme{AnnArbor}
+\usefonttheme{serif}
+\useinnertheme{rounded}
+%\usecolortheme{crane}
+\setbeamertemplate{blocks}[rounded][shadow=true]
+
+\usepackage{graphicx}
+
+\setmainfont{Times New Roman}
+\setCJKmainfont{Microsoft YaHei}
+\usepackage{tikz}
+\usetikzlibrary{arrows, decorations.pathmorphing, backgrounds, positioning, fit, petri, automata}
+\tikzset{>=stealth}
+
+\hypersetup{pdfpagemode=FullScreen}
+\renewcommand{\Pr}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+
+\usepackage{blkarray}
+
+
+\setbeamercolor{block title}{bg=red!10!white}
+\setbeamercolor{block body}{bg=gray!5!white}
+
+\newcommand{\dif}{{\;\rm d}}
+
+
+\usepackage{listings}
+
+
+\lstset{
+  language=Python, % 设置语言
+  basicstyle=\ttfamily, % 设置字体族
+  breaklines=true, % 自动换行
+  keywordstyle=\bfseries\color{blue}, % 设置关键字
+  ndkeywordstyle=\bfseries\color{blue}, % 设置关键字
+  classoffset=0,
+  emph=[0]{self, plt, pd, np, print, sm, sns, None, True, False}, % 指定强调词，如果有多个，用逗号隔开
+  emphstyle=\bfseries\color{magenta!90!black}, % 强调词样式设置
+  classoffset=1,
+  moreemph=[1]{plot, text, title, show, scatter, as, figure, xlabel, ylabel, fit, mean, median, index, columns, isnull, notnull, any, all, dropna, drop, fillna, replace, regex}, % 设置更多的关键字，用逗号分隔
+  emphstyle=\bfseries\color{blue}, % 强调词样式设置
+  classoffset=0,
+  commentstyle=\itshape\color{gray}, % 设置注释样式，斜体，浅灰色
+  stringstyle=\bfseries\color{green!50!black}, % 设置字符串样式
+  columns=flexible,
+  numberstyle=\footnotesize, % 缩小行号
+}
+
+\begin{document}
+\fontsize{11}{18}\selectfont
+
+
+\CTEXindent
+
+
+\title{第一章~~自动化数据采集及清洗2：数据处理}
+
+\author{主讲：方杰、李烜}
+\date{福建江夏学院金融学院}
+
+\maketitle
+
+\begin{frame}{本章目录}
+\begin{multicols*}{2}
+     \tableofcontents  
+\end{multicols*}
+     
+\end{frame}
+
+
+
+
+
+\begin{frame}[fragile]{数据处理}
+数据处理是对数据按照所需的目标或要求进行特殊处理，最终得到标准、干净、完整、符合使用要求的数据，以便后续进一步使用。
+
+数据清洗的主要工作包括缺失数据处理、数据格式规范、异常数据处理、重复数据处理等。
+
+基于Python内置的Pandas包进行数据的处理。
+\end{frame}
+
+
+
+\section{数据的缺失值处理}
+\begin{frame}[fragile]{数据缺失值处理}
+数据缺失是真实数据集中普遍存在的问题。
+
+对于缺失值的处理，最简单的方法是忽略或直接删除有缺失的数据，但这种方式会造成数据的丢失或不完整，可能使后续的统计分析产生偏差。
+\end{frame}
+
+
+\subsection{缺失值判断}
+\begin{frame}[fragile]{缺失值判断}
+    当数据量较小时，通过\verb|print|函数打印数据并观
+    察结果，其中显示为“\verb|NaN|”(Not a Number)
+    的，即为缺失值，也称空值（NaN）。
+    
+对DataFrame对象可以使用\verb|isnull()|或\verb|notnull()|函
+    数检测数据中是否含有空值
+\begin{enumerate}
+    \item \verb|isnull()| 判断DataFrame对象是否存在空值，并返回结果（True或False）
+    \item \verb|notnull()| 判断DataFrame对象是否不存在空值，并返回结果（True或False）
+    \item \verb|isnull().any()| 判断{\color{red}一列数据}的{\color{red}任意一个}是否存在空值
+    \item \verb|isnull().all()| 判断{\color{blue}一列数据}是否{\color{blue}全部}是空值
+\end{enumerate}
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]{缺失值判断(cont.)}
+\begin{block}{对一列数据进行判断}
+\begin{itemize}
+    \item \verb|isnull().any()| 或者 \verb|isnull().any(axis=0)|
+    \item \verb|isnull().all()| 或者 \verb|isnull().all(axis=0)|
+\end{itemize}
+\end{block}
+
+\begin{block}{对一{\color{red}行}数据进行判断}
+    \begin{itemize}
+        \item \verb|isnull().any(axis=1)| 
+        \item \verb|isnull().all(axis=1)| 
+    \end{itemize}
+    \end{block}
+\end{frame}
+
+\subsection{缺失值处理}
+
+\begin{frame}[fragile]{缺失值处理——删除}
+Pandas中\verb|dropna()|函数可用来删除缺失值所在的行或列
+\begin{lstlisting}
+df.dropna(axis=0, how='any', thresh=None,
+                subset=None, inplace=False)
+\end{lstlisting}
+\normalsize
+\begin{itemize}
+    \item \verb|axis| 默认\verb|axis=0/'index'|表示按行删除；\verb|axis=1/'columns'|则表示按列删除
+    \item \verb|how| 默认表示存在任意一个缺失值的行(列)；\verb|how='all'|表示整行(列)都是缺失值的行(列)
+    \item \verb|thresh| 整数型数据，表示当行（列）中非空数据多于这个数值时，该行（列）被保留（{\color{red}thresh}old）
+    \item \verb|subset| 数组类型，表示从subset指定的行(列)中寻找缺失值
+    \item \verb|inplace| 默认筛选后的数据存为副本；若为\verb|True|表示直接在原数据上更改
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{缺失值——补全}
+    补全缺失值的主要方法：
+\begin{enumerate}
+    \item 均值/中位数/众数补全：
+    根据属性值的类型，用该属性取值的平均数（mean）/中位数（median）/众数（mode）进行
+    补全
+    \item 固定值补全：将缺失的属性值用一个常量进行填补，如0
+    \item 临近值补全：使用缺失值临近的值进行填补
+    \item 回归方法：对有缺失值的变量，根据已有数据和与其有关的其他变量的数据建立拟合模型来预测缺失的属性值
+\end{enumerate}
+\end{frame}
+
+
+\begin{frame}[fragile]{缺失值补全}
+Pandas中\verb|fillna()|函数可用来补全缺失值
+\begin{lstlisting}
+df.fillna(value=None, method=None, axis=None,
+            inplace=False, limit=None)
+\end{lstlisting}
+\normalsize
+\begin{itemize}
+    \item \verb|value| 指定用来填充的值，可以是单个值、字典类型（dict）或者其他的DataFrame对象
+    \item \verb|method|
+    插值填入的方式，默认使用\verb|value|参数指定的数值填充；\verb|'backfill'/'bfill'|表示用下一个非缺失值填充该缺失值；\verb|'pad'/'ffill'|表示用前
+    一个非缺失值去填充该缺失值
+    \item \verb|axis| 需要填充的轴，默认按列填充；\verb|axis=1/'index'|表示按列填充
+    \item \verb|limit| 前向或后向填充时最大的填充范围,默认全部填充。
+\end{itemize}
+
+\end{frame}
+
+
+
+\begin{frame}[fragile]{固定值填充}
+可采用字典结构\verb|{key=value}|定义所需填充的值，在用\verb|fillna()|函数进行快速填充
+
+\begin{lstlisting}
+    values={'课程' : '金融大数据处理', '成绩' : 60}
+    df1 = df.fillna(value=values)
+    print(df1)
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]{临近值填充}
+    用缺失值所在列的前一个或后一个非缺失值填充缺失值填充
+
+\begin{lstlisting}
+# forward fill, axis=0
+    df1 = df.fillna(method='ffill') 
+    print(df1)
+# backward fill, axis=0
+    df2 = df.fillna(method='bfill') 
+    print(df2)
+\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}[fragile]{均值/中位数/众数/最大/最小值补充}
+实际数据分析工作中，常用平均值、中位数、最大值、最小值、众位数等来填充空值
+
+\begin{lstlisting}
+df1 = df.fillna(df['成绩'].mean())     # 均值填充
+df2 = df.fillna(df['成绩'].max())     # 最大值填充
+df3 = df.fillna(df['成绩'].min())     # 最小值填充
+df4 = df.fillna(df['成绩'].median())     # 中位数填充
+df5 = df.fillna(df['成绩'].value_counts().index[0])     # 最高频次数值(众数)填充
+\end{lstlisting}
+\end{frame}
+
+
+\section{数据格式规范}
+
+\begin{frame}[fragile]{数据格式规范问题}    
+在实际数据处理工作中，数据的来源多种多样，数据格式可能各不相同。常见的格式不规范问题有：
+\begin{enumerate}
+    \item 不同数据源对同一事物描述的单位不一致
+    \item 同类型数据，格式不一致
+    \item 数据格式不正确
+    \item 空白字符或特殊字符
+    \item 大小写不规范
+\end{enumerate}
+\end{frame}
+
+\subsection{数据格式查看}
+
+\begin{frame}[fragile]{数据格式查看}
+Pandas中的数据类型和Python本身自带数据类型有所区别
+\begin{center}
+\begin{tabular}{ccc}
+    \hline
+    类型&Pandas dtype& Python type\\
+    \hline
+字符（文本）型数据&object& str\\
+数值型整数类型&int64& int\\
+浮点型数字类型&float64& float\\
+布尔类型（ True/False）& bool& bool\\
+日期和时间类型&datetime64& NA\\
+\hline
+\end{tabular}
+\vskip .5cm
+
+\begin{itemize}
+    \item \verb|df.info()|：输出\verb|df|对象中各列的索引、非空计数、数据类型以及内存使用。
+   \item \verb|df.dtypes()|：返回\verb|df|对象中每一列的数据类型。
+\end{itemize}
+\end{center}
+\end{frame}
+
+\subsection{数据类型转换}
+\begin{frame}[fragile]{数据类型转换}
+    Pandas中\verb|astype('数据类型')|函数可对列数据进行强制类型转换
+\begin{lstlisting}
+    df.astype(dtype, copy=True)
+\end{lstlisting}
+\begin{itemize}
+    \item \verb|dtype| 需要被转换成的类型，可以选择\verb|'object'|、\verb|'int64'|、\verb|'float64'|、\verb|'datetime64'|
+等；也可以使用字典方式\verb|{col1:dtype1, col2:dtype2, ...}|，同时选择多个列进行不同类型
+的转换
+\item \verb|copy| 是否将转换后的数据覆盖原数据，默认返回一个副本；设置\verb|copy=False|则直接覆盖原数据
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{转换为日期型格式}
+    Pandas中\verb|to_datetime()|函数可将指定数据转换成日期格式
+\begin{lstlisting}
+    df.to_datetime(arg, format=None)
+\end{lstlisting}
+
+\begin{itemize}
+    \item \verb|arg|：需要处理的数据的列索引值
+    \item \verb|format|：日期格式，包括：
+\begin{itemize}\normalsize
+    \item \verb|'%Y-%m-%d'| 表示年月日格式
+    \item  \verb|'%Y-%m-%d %H:%M:%S'| 表示年月日并指定时分秒
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{转换为数值格式}
+    Pandas中\verb|to_numeric()|函数可以把列数据转换成数值型的float64或int64
+\begin{lstlisting}
+    df.to_numeric(arg, downcast)
+\end{lstlisting}
+
+\begin{itemize}
+    \item \verb|arg|：需要处理的数据的列索引值
+    \item \verb|downcast|：转换后的数据类型，包括 \verb|'int64'|、\verb|'object'|、 \verb|'float64'|（默认）
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{运行错误的问题}
+\begin{itemize}
+    \item 带有单位的数据，要删除单位才能转换成数值型
+    \item 产生的不合理数据
+\end{itemize}
+\end{frame}
+
+
+\subsection{空白字符处理}
+\begin{frame}[fragile]{空白字符的处理}
+    空格在文本型数据中是非常普遍的存在，为了便于后续数据分析时能够进行统一计算，需
+    要把无必要的空格进行删除。主要有：空格、制表符(\verb|\t|)、换行符(\verb|\n|)
+
+    空格可能的情况有：
+\begin{itemize}
+    \item 文本字符中的空格。
+    \item 数据内容为空白字符。
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{空白字符的检测}
+    \verb|values()|函数可将数据信息直观的显示出来。
+\begin{lstlisting}
+    print(df.values)
+\end{lstlisting}
+
+\begin{itemize}
+    \item \verb|\n|：有换行符
+    \item \verb|' '|：只有空白字符
+    \item \verb|\t|：有制表符
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{去除字符串前后的空格字符}
+    Pandas中去除字符型数据中的空白字符可以使用以下三个函数：
+\begin{itemize}
+    \item \verb|strip| 同时去除字符串左右两边的空格字符
+    \item \verb|lstrip| 去除字符串开头(left)的空格字符
+    \item \verb|rstrip| 去除字符串末尾(right)的空格字符
+\end{itemize}
+
+\begin{block}{举例：}
+\begin{lstlisting}
+s = pd.Series(['1. Ant. ', '2. Bee!\n', '3. Cat?\t'])
+print(s.str.lstrip('123.'))   # 删除s序列中的左侧字符
+print(s.str.strip())  # 删除s序列中各字符前后的空格
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{空白字符替换}
+对于字符间的空白符号可以用空字符进行替换，从而消除空白字符。Pandas中的
+\verb|replace()|函数常被用来查找并替换数据
+\begin{lstlisting}
+df.replace(to_replace=None, value=None, inplace=False, 
+            limit=None, regex=False, method='ffill')
+\end{lstlisting}\normalsize
+\begin{itemize}
+    \item \verb|to_replace| 表示需要被替换的值
+    \item \verb|value| 替换后的值
+    \item \verb|inplace| 是否要改变原数据表格，默认为不改变
+    \item \verb|limit| 限制替换的次数
+    \item \verb|regex| 是否使用正则表达式({\color{red}reg}ular {\color{red}ex}pression)，默认不使用
+    \item \verb|method| 替换方式，包括pad/ffill（用前一个值去替换该值）、bfill（用后一个
+    值去替换该值）
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{使用正则表达式替换空白字符}
+    正则表达式\verb|'\s+'|表示任意一个空白(space)字符
+\begin{lstlisting}
+    df = df.replace(r'\s+', '', regex=True)
+\end{lstlisting}
+
+\begin{block}{注意：}
+    正则表达式的前面要加上\verb|r|，相应的匹配规则要放在单引号\verb|' '|内。
+
+    此处\verb|r'\s+'|是Python中表示{\color{red}任意空白字符}的正则表达式
+\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]{完全空白字符的替换}
+    前后无字符的完全空字符的正则表达式为\verb|'^\s*$'|，用该正则表达式转换为空值（NaN）
+\begin{lstlisting}
+    import numpy as np
+    df = df.replace(r'^\s*$', np.nan, regex=True)
+\end{lstlisting}
+\begin{block}{说明：}
+\verb|^\s*$|表示从字符串的开头(\verb|^|)到结尾(\texttt{\$})都是空白字符(\verb|\s|)，\verb|*|表示一个或多个（空白字符）
+\end{block}
+此外，还可以按照需要，将空白字符直接替换成一个特定值
+\begin{lstlisting}
+    df = df.replace(r'^\s*$', 0, regex=True)
+\end{lstlisting}
+\end{frame}
+
+\subsection{数据格式统一}
+\begin{frame}[fragile]{数据格式统一}
+    当从多个数据源采集数据时，不可避免的会出现数据格式不统一的问题，包括：
+\begin{itemize}
+    \item 大小写统一：当某一列的数据为字母时，需要统一大小写格式。
+    \item  单位统一：对某列同一件事物的描述，不同来源的数据可能会采用不同的单位。
+    \item 小数位数统一：同一指标下的数值型数据，小数点后保留的位数需要进行统一化处理。
+    \item 描述方式统一：同一种事物有多种不同的描述方式，比如性别列“男”和“M”，也应当统一。
+\end{itemize}
+\end{frame}    
+   
+\begin{frame}[fragile]{大小写统一}
+    Python中用可以使用\verb|upper()|、\verb|lower()|、\verb|title()|函数来统一大小写
+\begin{center}
+\begin{tabular}{cc}
+    \hline
+    函数&用途\\
+    \hline
+    \verb|str.upper()| & 将文本转换成全大写形式\\
+    \verb|str.lower()| &将文本转换成全小写形式\\
+    \verb|str.title()| &将文本转换成首字母大写，其余小写的形式\\
+    \hline
+\end{tabular}
+\end{center}
+    
+\end{frame}    
+    
+\begin{frame}[fragile]{单位统一}
+    利用Pandas中replace()函数进行单位的统一和单位字符的去除
+    \normalsize
+\begin{lstlisting}
+# 去掉','和'￥'两个字符, regex=True表示使用正则替换，
+# 在字符串中匹配指定内容进行替换
+df['信用额度'] = df['信用额度'].replace(',', '', regex=True)
+                .replace('￥', '', regex=True)
+#统一万元和元的单位，去掉'元'
+df['信用额度'] = df['信用额度'].replace('万', '0000',
+                  regex=True).replace('元', '', regex=True) 
+#转换成float64数据类型
+df['信用额度'] = df['信用额度'].astype('float64') 
+\end{lstlisting}
+    
+\end{frame}
+    
+
+\begin{frame}[fragile]{小数位数的统一}
+    使用Pandas的\verb|round()|函数
+\begin{lstlisting}
+import pandas as pd
+import numpy as np
+df_round = pd.DataFrame(np.random.random([3, 3]),
+                        columns=['A', 'B', 'C'], 
+                        index=['one', 'two', 'three'])
+df = df_round*10
+print(df)
+print(df.round(0))   # 取整
+print(df.round(2))   # 取两位小数
+\end{lstlisting}
+
+    
+\end{frame}
+
+
+\begin{frame}[fragile]{描述方式的统一}
+使用\verb|replace()|进行字符串的替换
+\begin{lstlisting}
+# 先转换为大写，然后再用映射关系，
+#    将M转换为男，将F转换为女
+df['性别'] = df['性别'].str.upper()
+            .replace({'M' : '男',  'F' : '女'})
+\end{lstlisting}
+
+\end{frame}
+
+\section{异常数据处理}
+\begin{frame}[fragile]{异常值}
+异常值通常指样本中数值明显偏离其余的观测值的个别值，也称为离群点（outlier）。异常值的分析也称为离群点分析。
+
+包含：
+\begin{itemize}
+    \item 简单统计量分析
+    \item 箱型图分析
+    \item 3倍标准差
+\end{itemize}
+\end{frame}
+
+\subsection{简单统计量分析}
+
+
+\begin{frame}[fragile]{简单统计量分析}
+    当数据量较大时，可以先对变量做描述性统计，Pandas中的\verb|describe()|函数
+    可以展示列数据的统计性描述信息，包括：均值、方差、最大最小值、非空值数量、重复频次、不重复值个数等。
+\end{frame}
+
+
+\begin{frame}[fragile]{统计量描述函数}    
+\begin{lstlisting}
+describe(percentiles=None, include=None, exclude=None,
+          datetime_is_numeric=False)
+\end{lstlisting}
+    
+\begin{itemize}
+    \item \verb|percentiles| 设置百分位数统计量，默认为\verb|[.25,.5,.75]|，表示数值从小到大排序
+    后，位于25\%、50\%、75\%数据量时的数值
+    \item  \verb|include| 计算并输出哪类数据的统计量，默认值计算数值型列数据的特征统计量
+    \item  \verb|exclude| 与\verb|include|相反，哪些数据不需要计算特征统计量，默认不排除任何数据
+    \item  \verb|datetime_is_numeric| 是否把时间类型当成数值型类型处理，默认不处理
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{描述函数的输出结果}
+    数值型数据：
+\begin{itemize}
+    \item \verb|count| 非空数据的个数
+    \item \verb|mean| 数据平均值
+    \item \verb|std| 数据的标准差({\color{red}st}andard {\color{red}d}eviation)
+    \item \verb|25%/50%/75%|： 25\%/50\%/75\%分位上的数值
+    \item \verb|max/min| 数据的最大值/最小值
+\end{itemize}
+
+字符型数据：
+\begin{itemize}
+    \item \verb|count| 非空数据的个数
+    \item \verb|unique| 去重后值的个数
+    \item \verb|top| 出现频次最高的值
+    \item \verb|freq| 出现的最高频次
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{字符型数据统计}
+\begin{lstlisting}
+    # 指定输出文本类型列的统计信息
+    print(df.describe(include=['object']))
+\end{lstlisting}
+\end{frame}
+
+\subsection{箱型图分析}
+
+\begin{frame}[fragile]{箱型图分析}
+    箱型图(box plot)是一种用于显示一组数据分散情况的统计图，因形状如箱子而得
+    名。它能显示出一组数据的最大值、最小值、中位数(median)、及上下四分位数(quartile)。
+
+\begin{center}
+\begin{tikzpicture}[scale=.6]
+    \normalsize
+\draw (-2,-1) rectangle (2,.8);
+\draw[very thick](-2,0)--(2,0)node[right]{中位数};
+\draw[dashed](0,.8)--(0,.8+2.7);
+\draw[dashed](0,-1)--(0,-1-2.7);
+\draw(-1,.8+2.7)node[left]{上界}--(1,.8+2.7);
+\draw(-1,-1-2.7)node[left]{下界}--(1,-1-2.7);
+\draw[color=red] (0,4) circle (.08) node[right]{异常点};
+\draw[color=red] (0,-4) circle (.08) node[right]{异常点};
+\draw[color=magenta, ->](3,.8)node[right]{上四分位数QU}--(2.2,.8);
+\draw[color=magenta, ->](3,-1)node[right]{下四分位数QL}--(2.2,-1);
+
+\draw[color=blue, |<->|](-2.5,-1)--node[left]{IQR}(-2.5,.8);
+\draw[color=blue, <->](.6,-1)--node[right]{1.5IQR}(.6,-1-2.7);
+\draw[color=blue, <->](.6,.8)--node[right]{1.5IQR}(.6,.8+2.7);
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{上下边界计算}
+\begin{lstlisting}
+des = df.describe()
+q1 = des['工资']['25%'] 
+q3 = des['工资']['75%'] 
+iqr = q3-q1
+min_value = q1-1.5*iqr # 下界限
+max_value = q3+1.5*iqr # 上界限
+print('分位差为:%.3f, 下限为:%.3f, 上限为:%.3f'
+         %(iqr,min_value,max_value))
+\end{lstlisting}
+
+\begin{block}{说明：}
+\verb|%.3f|表示调整格式为保留{\color{red}小数点后3位}的浮点型（{\color{red}f}loat）数值。
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{绘制箱型图判断异常值}
+    用Pandas中\verb|boxplot()|函数直接绘制箱型图，可更加直观的观测异常值
+\begin{lstlisting}
+df.boxplot(column=None, fontsize=None, rot=0, 
+            grid=True, figsize=None, return_type=None)
+\end{lstlisting}
+\normalsize
+\begin{itemize}
+    \item \verb|column| 指定要进行箱型图分析的列，输入为字符型或由字符型构成的列表
+    \item \verb|fontsize| 箱型图坐标轴字体大小
+    \item \verb|rot| 箱型图坐标轴旋转角度（rotation）
+    \item \verb|grid| 箱型图网格线是否显示，默认显示
+    \item \verb|figsize| 箱型图窗口尺寸大小
+    \item \verb|return_type| 指定返回对象的类型，默认不指定
+\end{itemize}
+\end{frame}    
+
+
+
+    
+\subsection{3倍标准差原则}
+
+
+\begin{frame}[fragile]{$3\sigma$原则}
+如果数据服从正态分布，在$3\sigma$原则下，异常值被定义为一组测定值中与平均值的
+偏差超过3倍标准差的值。
+\begin{center}
+\includegraphics[scale=.5]{fig/1-1.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}[fragile]{$3\sigma$原则(cont.)}
+    \begin{block}{举例：}
+\begin{lstlisting}
+des = df.describe()
+std = des['工资']['std']    #获取“工资”列的标准差
+mean = des['工资']['mean']   #获取“工资”列的平均值
+data = df['工资']           #抽取df中“工资”列数据
+print(data[abs(data-mean)>3*std])
+\end{lstlisting}        
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{异常值处理}
+\begin{itemize}
+    \item 删除异常值记录：直接将含有异常值的记录删除
+    \item 视为缺失值：将异常值视为缺失值，按照缺失值处理的办法进行处理
+    \item     平均值修正：可用前后两个观测值的平均值
+    修正该异常值
+    \item 不处理：直接在具有异常值的数据集上进行挖掘建模
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{异常值处理(cont.)}
+    使用\verb|.loc[]|函数选定异常值所在的位置，进行重新赋值修改处理
+\begin{lstlisting}
+df.loc[行索引名/[行索引列表], 列索引名/[列索引列表]] = value
+\end{lstlisting}
+    
+\begin{block}{举例：}
+\begin{lstlisting}
+# 选择df数据中，姓名是叶炜浩的行，“工号”列的数据，
+# 并将该数据重新赋值为200107
+    df.loc[df['姓名'=='叶炜浩', '工号']] = 200107
+\end{lstlisting}
+    
+\end{block}
+\end{frame}
+
+
+\section{重复数据处理}
+
+
+
+\begin{frame}[fragile]{重复值的识别}
+Pandas中的\verb|duplicated()|函数通过返回布尔值序列，来判断DataFrame对象中，{\color{red}每一行}是否
+与之前出现过的行相同，即是否存在重复的情况
+
+\begin{lstlisting}
+    duplicated(subset=None, keep='first')
+\end{lstlisting}
+
+\begin{itemize}
+    \item \verb|subset| 指定进行重复值比较的列，默认对全部列进行比较
+    \item \verb|keep| 指定重复行的位置，并返回布
+    尔值True/False，选项有：\verb|{'first', 'last', False}|。如果想标记出所有出现重复的行，则可设置\verb|keep=False|
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{重复值的删除}
+Pandas中的\verb|drop_duplicates()|函数可用于删除\verb|duplicated()|函数返回结果中被标记为\verb|True|的行
+\begin{lstlisting}
+df.drop_duplicates(subset=None, keep='first', inplace=False)
+\end{lstlisting}
+\begin{itemize}
+    \item \verb|subset| 指定进行重复值比较的列，默认所有列
+    \item \verb|keep| 指定多个重复数据中{\color{red}保留}行的位
+    置，可以采用的选项有：\verb|{'first', 'last', False}|
+    \item 是否重新生成一个副本数据，默认表示直接在原数据上修改，\verb|True|表示
+    重新生成一个副本。
+\end{itemize}
+    
+\end{frame}
+
+\begin{frame}[fragile]{重复值的删除举例}
+\begin{lstlisting}
+print(df.drop_duplicates(subset=['姓名', '出生日期'],
+                         keep='last'))
+\end{lstlisting}
+根据姓名和出生日期，查找并删除重复数据，保留其中的最后一条数据记录。
+    
+\end{frame}
+
+
+\section{文本数据处理}
+
+\subsection{文本分析处理的概念}
+\begin{frame}[fragile]{文本分析处理的概念}
+文本数据处理从非结构化文本数据中提取出有价值、易存储、结构化的数据。
+
+常用的技术有：自然语言处理技术（NLP）、文字识别技术（OCR）
+\end{frame}
+    
+
+
+\begin{frame}[fragile]{自然语言处理技术}
+自然语言处理，简称NLP（Natural Language Processing）是以语言为对象，利用计算机技术来分析、理解和处理自然语言的一门学科
+
+自然语言处理技术主要应用于机器翻译、舆情监测、
+自动摘要、观点提取、文本分类、自动问答、文本语义对比、语音识别等方面
+\end{frame}
+
+\begin{frame}[fragile]{文字识别技术}
+文字识别技术，
+也称光学字符识别（Optical Character Recognition，OCR），采用
+光学的方式将纸质文档中的文字转换成为黑白点阵的图像文件，
+并通过识别软件将图像中的文字转换成文本格式，供文字处理软
+件进一步编辑加工的技术
+
+OCR技术的应用场景：快递收件和寄
+件信息的填写、
+拍照识物、图片转文字、卡号识别、支票识别、财务报表信息识别等
+\end{frame}
+
+\subsection{文本分析处理的过程}
+
+\begin{frame}[fragile]{文本分析处理的过程}
+    \centering
+\begin{tikzpicture}
+\node[fill=red!20!white] (A) at (0,0) {语料获取} ;   
+\node[fill=green!20!white] (A1) at (3,0) {预处理} ;   
+\node[fill=blue!20!white] (A2) at (6,0) {文档表示} ;   
+\node[fill=brown!20!white] (A3) at (9,0) {特征抽取} ;   
+\draw[->, very thick, blue](A)--(A1);
+\draw[->, very thick, blue](A1)--(A2);
+\draw[->, very thick, blue](A2)--(A3);
+
+\node[fill=red!10!white] (B1) at (0,-1.5) {手工收集} ;   
+\node[fill=red!10!white] (B2) at (0,-2.5) {网络抓取} ;   
+\draw[->, thick, blue](A)--(B1);
+\draw(B1)--(B2);
+
+\node[fill=green!10!white] (C1) at (3,-1.5) {文档解析} ;   
+\node[fill=green!10!white] (C2) at (3,-2.5) {文本定位与数据清洗} ;   
+\node[fill=green!10!white] (C3) at (3,-3.5) {文本分词} ;   
+\node[fill=green!10!white] (C4) at (3,-4.5) {词性标注} ;   
+\node[fill=green!10!white] (C5) at (3,-5.5) {去除停用词} ;   
+\draw[->, thick, blue](A1)--(C1);
+\draw(C1)--(C2)--(C3)--(C4)--(C5);
+
+
+\node[fill=blue!10!white] (D1) at (6,-1.5) {词云} ;   
+\node[fill=blue!10!white] (D2) at (6,-2.5) {词袋模型} ;   
+\node[fill=blue!10!white] (D3) at (6,-3.5) {词嵌入} ;   
+\node[fill=blue!10!white] (D4) at (6,-4.5) {主题模型} ;   
+\draw[->, thick, blue](A2)--(D1);
+\draw(D1)--(D2)--(D3)--(D4);
+
+
+\node[fill=brown!10!white] (E1) at (9,-1.5) {文本可读性} ;   
+\node[fill=brown!10!white] (E2) at (9,-2.5) {文本情绪} ;   
+\node[fill=brown!10!white] (E3) at (9,-3.5) {语义关联性} ;   
+\node[fill=brown!10!white] (E4) at (9,-4.5) {文本相似性} ;   
+\draw[->, thick, blue](A3)--(E1);
+\draw(E1)--(E2)--(E3)--(E4);
+\end{tikzpicture}
+\end{frame}
+
+
+\begin{frame}[fragile]{语料获取}
+\begin{itemize}
+    \item 手工收集：消耗大量的时间和人力成本
+    \item 机器抓取：能够便捷、迅速地获取文本信息；抓取的同时对文本数据进行格式和内容的自动化、人工智能整理
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{预处理：文档解析}
+文档解析是进行文本预处理的第一步。在计算机领域，电子化文档被统
+称为富格式文档（Rich Text Document），这些文档包含文本段落、表格、图表等多种内容形态
+
+解析富格式文档是进行文本预处理的第一步，即获取里面的信息内容
+\end{frame}
+
+\begin{frame}[fragile]{预处理：文本定位与数据清洗}
+    文本定位是指对需要的文本信息
+    进行定位，进而将该内容提取出
+    来
+
+    数据清洗是指对文本中视为噪音的内容
+进行清洗和删除，噪音内容主要包括广
+告、超文本标记语言（HTML）、直译
+式脚本语言、图片等
+
+    
+\end{frame}
+
+\begin{frame}[fragile]{预处理：文本分词}
+    文本分词就是将句子、段落，分解为以字词为单位的结构。常用的分词方法有基于规则的和基于统计的
+\begin{block}{中文文本分词的注意事项}
+    \begin{enumerate}
+        \item 切分颗粒度太小，容易破坏词语的意思
+        \item   针对歧义词，应该选择合适的分词模式
+        \item 信息爆炸的时代，新词汇层出不穷，及时
+        的积累和快速的识别新词是一大难点
+    \end{enumerate}
+\end{block}
+
+常用的分词工具有\verb|Jieba|、\verb|HanLPL|等。
+\end{frame}
+
+\begin{frame}[fragile]{词性标注}
+词性标注就是对切分后词语的词性做标记
+
+    通过词性标注，计算机能够识别词语的种类，消除词语歧义，进而能识别语法结构，降低计算机语义分析的难度
+
+    中英文在词性标注方面具有较大的差异
+\begin{itemize}
+    \item 英文单词能通过词尾变换来揭示词性的变化
+    \item 中文主要靠语法和语义来识别词性
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{去除停用词}
+    停用词对句子语法结构很重要，但本身传
+    达意义较少
+\begin{itemize}
+    \item 英文：冠词（the, a）、
+    连词（and, or）以及动
+    词“to be”等
+    \item 中文里的标点符号、特殊
+    符号、表示逻辑关系的连
+    接词（和、然而、因为、）
+    以及俚语等
+\end{itemize}
+
+停用词增加了文本数据处理的难度，提高了文本分析的成本。
+
+停用词的去除需要根据具体语义内容和分析目的来决定。
+\end{frame}
+
+
+\subsection{文档表示}
+\begin{frame}[fragile]{词云}
+    词云技术能够描述词语在文本中出
+    现的频率，当词语出现频率较高时，
+    会以较大且醒目的形式呈现。
+
+    
+\end{frame}
+
+\begin{frame}[fragile]{词袋模型}
+    词袋模型（bag of words，BOW）是一种建立在文字词
+    组语序不重要的假设之上，将文本看作是若干个词语的集合，只计算
+    每个词语出现次数的一种文本向量化的表示方法
+\end{frame}
+
+
+\begin{frame}[fragile]{词嵌入}
+    词嵌入是一种词的数值化表达，是将词汇映射到一个多维向量空间中的实数向量的方法统称
+
+    通过计算词向量之间夹角余弦值（cosine）
+    而得出单词之间的相似性
+\end{frame}
+
+
+\begin{frame}[fragile]{主题模型}
+    主题模型会自动分析文档，统计词语信息，断定当前文档含有哪
+    些主题，以及每个主题所占的比例。如LDA（Latent Dirichlet Allocation, 隐狄利克雷分配）模型。
+\end{frame}
+
+\begin{frame}[fragile]{特征抽取}
+\begin{itemize}
+    \item 文本可读性：
+   反映了读者理解文本信息的难易程度。
+    \item 文本情绪：
+    提取方法主要包括词典法和有监督机器学习方法。
+    \item 语义关联性：
+    根据某一类词语去识别文本语义特征的过程。
+    \item 文本相似性：
+    文本数据处理中，经常需要判断两个文本是否相似，并计算相似程度。
+\end{itemize}
+
+    
+\end{frame}
+
+\end{document}
