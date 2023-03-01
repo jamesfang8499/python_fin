@@ -32,10 +32,10 @@
   keywordstyle=\bfseries\color{blue}, % 设置关键字
   ndkeywordstyle=\bfseries\color{blue}, % 设置关键字
   classoffset=0,
-  emph=[0]{self, plt, pd, np, print, sm, None, True, False}, % 指定强调词，如果有多个，用逗号隔开
+  emph=[0]{self, plt, pd, np, print, sm, None, True, False, Logit}, % 指定强调词，如果有多个，用逗号隔开
   emphstyle=\bfseries\color{magenta!90!black}, % 强调词样式设置
   classoffset=1,
-  moreemph=[1]{plot, text, title, show, scatter, as}, % 设置更多的关键字，用逗号分隔
+  moreemph=[1]{plot, text, title, show, scatter, as, fit}, % 设置更多的关键字，用逗号分隔
   emphstyle=\bfseries\color{blue}, % 强调词样式设置
   classoffset=0,
   commentstyle=\itshape\color{gray}, % 设置注释样式，斜体，浅灰色
@@ -282,27 +282,89 @@ plt.show()
 逻辑回归模型}
 \begin{frame}[fragile]
   \frametitle{信贷风险的逻辑回归模型}
-  逻辑（Logistic）回归是目前银行建立大数据信用评估最常用的方法，可以解决二分类的
+
+受限因变量模型（Limited Dependent Variable model, LDV），是一类因变量取值为二分类数据的特殊模型。常见的有Logit模型、Probit模型等。
+
+  逻辑（Logistic）回归（Logit Regression）是目前银行建立大数据信用评估最常用的方法，可以解决二分类的
   非线性问题。
   
   在信用评估时，用逻辑回归模型返回的违约概率结果是0到1之间以小数形式呈现的类概率数
   字，用以判断客户是否会违约，以及违约的可能性大小，具有对特征可解释性强的优点。
-
-
-\end{frame}
-
-
-\begin{frame}[fragile]
-  \frametitle{}
-.
-  
-
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{}
-.
-  
+  \frametitle{逻辑回归的数学模型}
+假设线性回归模型
+\[{\bf a}'{\bf x}+b = \begin{bmatrix}
+  a_1&a_2&\cdots&a_n
+\end{bmatrix}\begin{bmatrix}
+  x_1\\x_2\\ \vdots \\x_n
+\end{bmatrix}+b=a_1x_1+a_2x_2+\cdots+a_nx_n+b \]
+然后使用一个单位阶跃函数，将结果映射到$[0,1]$。对于逻辑回归模型而言，该函数的形式如下：
+{\LARGE\[ f\,({\bf x})=\frac{1}{1+e^{-({\bf a}'{\bf x}+b)}}\]}
+
+
 
 \end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{单位阶跃函数}
+\begin{center}
+  \begin{tikzpicture}[scale=1.25]
+\draw[->, thick](-3,0)--(3,0)node[right]{$x$};
+\draw[->, thick](0,-.5)--(0,3)node[right]{$y$};
+\draw[dashed](-3,2)--(3,2);
+\draw [domain=-3:3, samples=300, very thick, blue]plot(\x, {2/(1+exp(-\x))})node[above]{$y=\dfrac{1}{1+e^{-x}}$} ; 
+\node at (0,0)[below left]{$O$};
+\node at (0,2)[above right]{1};
+\node at (0,1)[below right]{0.5};
+\draw[fill, red](0,1)circle(.05);
+  \end{tikzpicture}
+\end{center}
+\end{frame}  
+
+
+
+\begin{frame}[fragile]{逻辑回归的数学模型(cont.)}
+  将逻辑回归输出与二分类问题输出$y=\{0, 1\}$建立联系
+
+  设0.5为临界值：
+\begin{itemize}
+  \item 当$f({\bf x})>0.5$，即${\bf a}'{\bf x}+b>0$时，$y$为1；
+  \item 当$f({\bf x})<0.5$，即${\bf a}'{\bf x}+b<0$时，$y$为0；
+  \item $f({\bf x})$越接近临界值0.5则无法判断，分类准确性下降。
+\end{itemize}
+
+\begin{block}{说明：}
+  逻辑回归被广泛应用于分类问题，并且不要求自变量和因变量之间有线性关系。与线性回归模型相比，逻辑回归{\color{red}对异常值不敏感}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{逻辑回归分析的Python实现}
+Python中\verb|statsmodels|包的\verb|Logit|函数可以实现逻辑回归模型构建
+\begin{lstlisting}
+import numpy as np
+from statsmodels.api import Logit
+logit = Logit(yTrain, XTrain) 
+# yTrain是因变量(取值为0或1)训练集；XTrain是自变量训练集
+result = logit.fit()
+print(result.summary())
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{逻辑回归分析的预测与检验}
+用测试集进行预测，结果为事件发生的概率，取值在$[0,1]$之间。将预测结果与0.5进行比较，大于等于0.5，则判
+定事件发生，取值为“1”；反之，判定事件不发生，取值为“0”
+\begin{lstlisting}
+import pandas as pd
+pred = result.predict(XTest) 
+# result是前面逻辑回归模型的拟合结果
+Value = round(pred)  # 预测结果>=0.5的，判定为1；反之为0
+compare = pd.DataFrame({'predictedValue':pred, 'roundValue':Value, 'actual':y.tail(10)})  # 引号中的是列名定义
+print(compare)  # 这里y.tail(10)存储的是实际因变量取值
+print(np.sum(Value==y.tail(10))/10)  # 计算10个预测值的准确率
+\end{lstlisting}
+\end{frame}
+
+
 \end{document}
